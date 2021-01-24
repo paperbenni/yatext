@@ -44,4 +44,11 @@ fi
 
 export EDITOR="${EDITOR:-nvim}"
 
+if ! task "$TUUID" | grep -q 'yatext'
+then
+    task "$TUUID" annotate yatext note
+    task "$TUUID" modify +yatext
+    echo "initialized new yatext task"
+fi
+
 $EDITOR "$TASKLOCATION/yatext/$TUUID.md"
