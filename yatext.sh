@@ -4,7 +4,6 @@
 export EDITOR="${EDITOR:-nvim}"
 
 SEARCHSTRING="${1:-'/./'}"
-echo "$SEARCHSTRING"
 
 if [ -n "$1" ]; then
     case $1 in
@@ -13,6 +12,27 @@ if [ -n "$1" ]; then
         exit
         ;;
     esac
+fi
+
+if grep -q '^+[a-zA-Z0-9]*$' <<<"$SEARCHSTRING"; then
+    if ! {
+        task tags | grep -q "^$SEARCHSTRING "
+    } &>/dev/null; then
+        echo "partial tag found"
+        NEWTAG="$(
+            task rc.verbose:nothing tags | grep -o "^[^ ]*" | grep "^${SEARCHSTRING#+}"
+        )"
+        if [ -z "$NEWTAG" ]; then
+            echo "no tag matches for $SEARCHSTRING"
+            exit 1
+        fi
+        if [ "$(echo "$NEWTAG" | wc -l)" -gt 1 ]; then
+            NEWTAG="$(echo "$NEWTAG" | fzf)"
+            [ -z "$NEWTAG" ] && exit 1
+        fi
+        echo "new tag $NEWTAG"
+        SEARCHSTRING="+$NEWTAG"
+    fi
 fi
 
 TASKLIST="$(
@@ -43,7 +63,6 @@ fi
 
 TASKLOCATION="$(task rc.defaultheight=0 rc.verbose=nothing show data.location | sed 's/^[^ ]*[ ]*//g' | grep '.' | tail -1)"
 TASKLOCATION="${TASKLOCATION/#\~/$HOME}"
-echo "task $TASKLOCATION"
 
 if [ -z "$TASKLOCATION" ] || ! [ -e "$TASKLOCATION" ]; then
     exit 1
@@ -53,10 +72,14 @@ fi
 
 export EDITOR="${EDITOR:-nvim}"
 
-if ! task "$TUUID" | grep -q 'yatext'; then
-    task "$TUUID" annotate yatext note
-    task "$TUUID" modify +yatext
-    echo "initialized new yatext task"
-fi
-
 $EDITOR "$TASKLOCATION/yatext/$TUUID.md"
+
+if [ -e "$TASKLOCATION/yatext/$TUUID.md" ]; then
+    if ! {
+        task "$TUUID" information | grep -q 'yatext'
+    } &>/dev/null; then
+        task "$TUUID" annotate yatext note
+        task "$TUUID" modify +yatext
+        echo "initialized new yatext task"
+    fi
+fi
