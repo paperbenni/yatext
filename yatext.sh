@@ -13,8 +13,6 @@ TASKLIST="$(
         rc.defaultwidth=0 \
         rc.defaultheight=0 rc.verbose=nothing rc._forcecolor=on "$SEARCHSTRING" list
 )"
-echo "$TASKLIST"
-exit
 
 if [ "$(echo "$TASKLIST" | wc -l)" -gt 1 ]; then
     TASKLINE="$(echo "$TASKLIST" | fzf --ansi)"
@@ -27,15 +25,17 @@ else
     TASKLINE="$TASKLIST"
 fi
 
-TUUID="$(grep -o '[^ ]*$' <<<"$TASKLINE")"
+TUUID="$(grep -o '[^ ]*$' <<<"$TASKLINE" | sed 's/\x1b\[[0-9;]*m//g')"
 if [ -z "$TUUID" ]; then
     echo "uuid not found"
     exit 1
 fi
 
-TASKLOCATION="$(task show data.location | sed 's/^[^ ]*[ ]*//g')"
+TASKLOCATION="$(task rc.defaultheight=0 rc.verbose=nothing show data.location | sed 's/^[^ ]*[ ]*//g' | grep '.' | tail -1)"
+TASKLOCATION="${TASKLOCATION/#\~/$HOME}"
+echo "task $TASKLOCATION"
+
 if [ -z "$TASKLOCATION" ] || ! [ -e "$TASKLOCATION" ]; then
-    echo "data location appears to be non-existent or corrupted"
     exit 1
 fi
 
