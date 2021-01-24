@@ -6,6 +6,15 @@ export EDITOR="${EDITOR:-nvim}"
 SEARCHSTRING="${1:-'/./'}"
 echo "$SEARCHSTRING"
 
+if [ -n "$1" ]; then
+    case $1 in
+    --help)
+        echo "usage: yatext taskwarrior-filter-expression"
+        exit
+        ;;
+    esac
+fi
+
 TASKLIST="$(
     task rc.report.list.filter:'status:pending or status:waiting or status:completed' \
         rc.report.list.columns:'id,start.age,entry.age,depends.indicator,priority,description.count,tags,recur.indicator,scheduled.countdown,due,until.remaining,project,urgency,uuid' \
@@ -44,8 +53,7 @@ fi
 
 export EDITOR="${EDITOR:-nvim}"
 
-if ! task "$TUUID" | grep -q 'yatext'
-then
+if ! task "$TUUID" | grep -q 'yatext'; then
     task "$TUUID" annotate yatext note
     task "$TUUID" modify +yatext
     echo "initialized new yatext task"
