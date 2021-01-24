@@ -8,8 +8,9 @@ echo "$SEARCHSTRING"
 
 TASKLIST="$(
     task rc.report.list.filter:'status:pending or status:waiting or status:completed' \
-        rc.report.list.columns:'id,start.age,entry.age,depends.indicator,priority,project,tags,recur.indicator,scheduled.countdown,due,until.remaining,description.count,urgency,uuid' \
-        rc.report.list.labels:'ID,Active,Age,D,P,Project,Tags,R,Sch,Due,Until,Description,Urg,UUID' \
+        rc.report.list.columns:'id,start.age,entry.age,depends.indicator,priority,description.count,tags,recur.indicator,scheduled.countdown,due,until.remaining,project,urgency,uuid' \
+        rc.report.list.labels:'ID,Active,Age,D,P,Description,Tags,R,Sch,Due,Until,Project,Urg,UUID' \
+        rc.report.list.sort:'status-,start-,due+,project+,urgency-' \
         rc.defaultwidth=0 \
         rc.defaultheight=0 rc.verbose=nothing rc._forcecolor=on "$SEARCHSTRING" list
 )"
