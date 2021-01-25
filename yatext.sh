@@ -14,35 +14,58 @@ if [ -n "$1" ]; then
     esac
 fi
 
-if grep -q '^+[a-zA-Z0-9]*$' <<<"$SEARCHSTRING"; then
-    if ! {
-        task tags | grep -q "^$SEARCHSTRING "
-    } &>/dev/null; then
-        echo "partial tag found"
-        NEWTAG="$(
-            task rc.verbose:nothing tags | grep -o "^[^ ]*" | grep "^${SEARCHSTRING#+}"
-        )"
-        if [ -z "$NEWTAG" ]; then
-            echo "no tag matches for $SEARCHSTRING"
+TASKLIST=""
+
+searchtask() {
+    TMPSEARCH="$1"
+    if grep -q '^+[a-zA-Z0-9]*$' <<<"$TMPSEARCH"; then
+        if ! {
+            task tags | grep -q "^$TMPSEARCH"
+        } &>/dev/null; then
+            echo "partial tag found"
+            NEWTAG="$(task rc.verbose:nothing tags | grep -o "^[^ ]*" | grep "^${TMPSEARCH#+}")"
+            if [ -z "$NEWTAG" ]; then
+                echo "no tag matches for $TMPSEARCH"
+                exit 1
+            fi
+            if [ "$(echo "$NEWTAG" | wc -l)" -gt 1 ]; then
+                NEWTAG="$(echo "$NEWTAG" | fzf)"
+                [ -z "$NEWTAG" ] && exit 1
+            fi
+            echo "new tag $NEWTAG"
+            TMPSEARCH="+$NEWTAG"
+        fi
+    fi
+
+    # partial project search
+    if grep -q '^p:[^ ]*$' <<<"$TMPSEARCH"; then
+        echo "project search initiated"
+        TMPPROJECT="$(grep -o ' p:[^*]* ' <<<"$TMPSEARCH" | grep -o '[^:]*$' | grep -o '^[^ ]*' | head -1)"
+        NEWPROJECT="$(task rc.verbose:nothing projects | grep -v '^[0-9]* projects' | grep -v '(none)'| grep -o "^[^ ]*" | grep "^${TMPPROJECT#p:}")"
+        if [ -z "$NEWPROJECT" ]; then
+            echo "no project matches found"
             exit 1
         fi
-        if [ "$(echo "$NEWTAG" | wc -l)" -gt 1 ]; then
-            NEWTAG="$(echo "$NEWTAG" | fzf)"
-            [ -z "$NEWTAG" ] && exit 1
+        if [ "$(echo "$NEWPROJECT" | wc -l)" -gt 1 ]; then
+            NEWPROJECT="$(echo "$NEWPROJECT" | fzf)"
+            TMPSEARCH="project:$NEWPROJECT"
+            echo "new search $TMPSEARCH"
+            [ -z "$NEWPROJECT" ] && exit 1
         fi
-        echo "new tag $NEWTAG"
-        SEARCHSTRING="+$NEWTAG"
-    fi
-fi
 
-TASKLIST="$(
-    task rc.report.list.filter:'status:pending or status:waiting or status:completed' \
-        rc.report.list.columns:'id,start.age,entry.age,depends.indicator,priority,description.count,tags,recur.indicator,scheduled.countdown,due,until.remaining,project,urgency,uuid' \
-        rc.report.list.labels:'ID,Active,Age,D,P,Description,Tags,R,Sch,Due,Until,Project,Urg,UUID' \
-        rc.report.list.sort:'status-,start-,due+,project+,urgency-' \
-        rc.defaultwidth=0 \
-        rc.defaultheight=0 rc.verbose=nothing rc._forcecolor=on "$SEARCHSTRING" list
-)"
+    fi
+
+    TASKLIST="$(
+        task rc.report.list.filter:'status:pending or status:waiting or status:completed' \
+            rc.report.list.columns:'id,start.age,entry.age,depends.indicator,priority,description.count,tags,recur.indicator,scheduled.countdown,due,until.remaining,project,urgency,uuid' \
+            rc.report.list.labels:'ID,Active,Age,D,P,Description,Tags,R,Sch,Due,Until,Project,Urg,UUID' \
+            rc.report.list.sort:'status-,start-,due+,project+,urgency-' \
+            rc.defaultwidth=0 \
+            rc.defaultheight=0 rc.verbose=nothing rc._forcecolor=on "$TMPSEARCH" list
+    )"
+}
+
+searchtask "$SEARCHSTRING"
 
 if [ "$(echo "$TASKLIST" | wc -l)" -gt 1 ]; then
     TASKLINE="$(echo "$TASKLIST" | fzf --ansi)"
