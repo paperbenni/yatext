@@ -61,7 +61,8 @@ searchtask() {
             rc.report.list.labels:'ID,Active,Age,D,P,Description,Tags,R,Sch,Due,Until,Project,Urg,UUID' \
             rc.report.list.sort:'status-,start-,due+,project+,urgency-' \
             rc.defaultwidth=0 \
-            rc.defaultheight=0 rc.verbose=nothing rc._forcecolor=on "$TMPSEARCH" list
+            rc.defaultheight=0 rc.verbose=nothing rc._forcecolor=on "$TMPSEARCH" list | 
+	      grep '....' | grep -v 'ID.*Age.*Description.*Tags' | grep -v '^1 t'
     )"
 }
 
@@ -92,8 +93,6 @@ if [ -z "$TASKLOCATION" ] || ! [ -e "$TASKLOCATION" ]; then
 fi
 
 [ -e "$TASKLOCATION/yatext" ] || mkdir "$TASKLOCATION"/yatext
-
-export EDITOR="${EDITOR:-nvim}"
 
 $EDITOR "$TASKLOCATION/yatext/$TUUID.md"
 
