@@ -15,3 +15,4 @@ yet another task warrior extension
 - Clean unused attachments
 - Other kinds of attachments
 - Auto-store changes in git-crypt repo
+- yatext add to append to yatext note

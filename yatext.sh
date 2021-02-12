@@ -41,7 +41,7 @@ searchtask() {
     if grep -q '^p:[^ ]*$' <<<"$TMPSEARCH"; then
         echo "project search initiated"
         TMPPROJECT="$(grep -o ' p:[^*]* ' <<<"$TMPSEARCH" | grep -o '[^:]*$' | grep -o '^[^ ]*' | head -1)"
-        NEWPROJECT="$(task rc.verbose:nothing projects | grep -v '^[0-9]* projects' | grep -v '(none)'| grep -o "^[^ ]*" | grep "^${TMPPROJECT#p:}")"
+        NEWPROJECT="$(task rc.verbose:nothing projects | grep -v '^[0-9]* projects' | grep -v '(none)' | grep -o "^[^ ]*" | grep "^${TMPPROJECT#p:}")"
         if [ -z "$NEWPROJECT" ]; then
             echo "no project matches found"
             exit 1
@@ -61,8 +61,8 @@ searchtask() {
             rc.report.list.labels:'ID,Active,Age,D,P,Description,Tags,R,Sch,Due,Until,Project,Urg,UUID' \
             rc.report.list.sort:'status-,start-,due+,project+,urgency-' \
             rc.defaultwidth=0 \
-            rc.defaultheight=0 rc.verbose=nothing rc._forcecolor=on "$TMPSEARCH" list | 
-	      grep '....' | grep -v 'ID.*Age.*Description.*Tags' | grep -v '^1 t'
+            rc.defaultheight=0 rc.verbose=nothing rc._forcecolor=on "$TMPSEARCH" list |
+            grep '....' | grep -v 'ID.*Age.*Description.*Tags' | grep -v '^1 t'
     )"
 }
 
@@ -93,6 +93,13 @@ if [ -z "$TASKLOCATION" ] || ! [ -e "$TASKLOCATION" ]; then
 fi
 
 [ -e "$TASKLOCATION/yatext" ] || mkdir "$TASKLOCATION"/yatext
+
+if ! [ -e "$TASKLOCATION/yatext/$TUUID.md" ]; then
+    TTITLE="$(task rc.report.next.columns:'description' rc.report.next.labels:'description' rc.verbose=nothing rc.defaultwidth=0 next "$TUUID")"
+    echo "TITLE $TTITLE"
+    echo "# $TTITLE" >"$TASKLOCATION/yatext/$TUUID.md"
+    echo "created new task"
+fi
 
 $EDITOR "$TASKLOCATION/yatext/$TUUID.md"
 
