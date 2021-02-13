@@ -16,6 +16,8 @@ if [ -n "$1" ]; then
         ;;
     a)
         YACTION="append"
+        shift 1
+        SEARCHSTRING="${1:-'/./'}"
         ;;
     r)
         cd "$TASKLOCATION/yatext" || exit 1
