@@ -12,7 +12,6 @@ yet another task warrior extension
 - Filter using taskwarrior expressions (not just ids)
   - match partial tags
   - shortcuts for status:, project: etc
-- Clean unused attachments
+- Clean unused attachments (going to be relevant when purge hits arch repos)
 - Other kinds of attachments
 - Auto-store changes in git-crypt repo
-- yatext add to append to yatext note

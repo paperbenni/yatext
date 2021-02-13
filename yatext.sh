@@ -5,12 +5,45 @@ export EDITOR="${EDITOR:-nvim}"
 
 SEARCHSTRING="${1:-'/./'}"
 
+TASKLOCATION="$(task rc.defaultheight=0 rc.verbose=nothing show data.location | sed 's/^[^ ]*[ ]*//g' | grep '.' | tail -1)"
+TASKLOCATION="${TASKLOCATION/#\~/$HOME}"
+
 if [ -n "$1" ]; then
     case $1 in
     --help)
         echo "usage: yatext taskwarrior-filter-expression"
         exit
         ;;
+    a)
+        YACTION="append"
+        ;;
+    r)
+        cd "$TASKLOCATION/yatext" || exit 1
+        if [ -z "$2" ]; then
+            GREPTEXT="$(dialog --inputbox searchtext 10 100)"
+            [ -z "$GREPTEXT" ] && exit 1
+        else
+            GREPTEXT="$2"
+        fi
+        SEARCHLIST="$(rg --vimgrep "$GREPTEXT" . | sed 's/\([^:]*\):[0-9]*:[0-9]*:\(.*\)/\1;:; \2/g')"
+        if [ -z "$SEARCHLIST" ]; then
+            echo "no matches"
+            exit
+        fi
+        if [ "$(wc -l <<<"$SEARCHLIST")" -gt 1 ]; then
+            SEARCHFILE="$(fzf <<<"$SEARCHLIST" | grep -o '^.*;:;' | sed 's/;:;//g')"
+        else
+            SEARCHFILE="$SEARCHLIST"
+        fi
+
+        [ -z "$SEARCHFILE" ] && exit
+
+        $EDITOR "$SEARCHFILE"
+
+        exit
+
+        ;;
+    *) ;;
     esac
 fi
 
@@ -85,9 +118,6 @@ if [ -z "$TUUID" ]; then
     exit 1
 fi
 
-TASKLOCATION="$(task rc.defaultheight=0 rc.verbose=nothing show data.location | sed 's/^[^ ]*[ ]*//g' | grep '.' | tail -1)"
-TASKLOCATION="${TASKLOCATION/#\~/$HOME}"
-
 if [ -z "$TASKLOCATION" ] || ! [ -e "$TASKLOCATION" ]; then
     exit 1
 fi
@@ -101,7 +131,33 @@ if ! [ -e "$TASKLOCATION/yatext/$TUUID.md" ]; then
     echo "created new task"
 fi
 
-$EDITOR "$TASKLOCATION/yatext/$TUUID.md"
+if [ -z "$YACTION" ]; then
+    $EDITOR "$TASKLOCATION/yatext/$TUUID.md"
+else
+    case $YACTION in
+    append)
+        if [ -z "$2" ]; then
+            APPENDTEXT="$(dialog --inputbox 'append text' 10 100)"
+            [ -z "$APPENDTEXT" ] && exit 1
+        else
+            APPENDTEXT="$2"
+        fi
+        echo "$APPENDTEXT" >>"$TASKLOCATION/yatext/$TUUID.md"
+        ;;
+    ripgrep)
+
+        if [ -z "$2" ]; then
+            GREPTEXT="$(dialog --inputbox searchtext 10 100)"
+            [ -z "$GREPTEXT" ] && exit 1
+        else
+            GREPTEXT="$2"
+        fi
+        SEARHCHFILE="$(rg --vimgrep "$GREPTEXT" . | sed 's/\([^:]*\):[0-9]*:[0-9]*:\(.*\)/\1\/ \2/g' | fzf | grep -o '^[^/]*')"
+        echo "Searchfile $SEARHCHFILE"
+        ;;
+    esac
+
+fi
 
 if [ -e "$TASKLOCATION/yatext/$TUUID.md" ]; then
     if ! {
