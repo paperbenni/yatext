@@ -33,10 +33,11 @@ if [ -n "$1" ]; then
             exit
         fi
         if [ "$(wc -l <<<"$SEARCHLIST")" -gt 1 ]; then
-            SEARCHFILE="$(fzf <<<"$SEARCHLIST" | grep -o '^.*;:;' | sed 's/;:;//g')"
+            SEARCHFILE="$(fzf <<<"$SEARCHLIST")"
         else
             SEARCHFILE="$SEARCHLIST"
         fi
+        SEARCHFILE="$(grep -o '^.*;:;' <<<"$SEARCHFILE" | sed 's/;:;//g')"
 
         [ -z "$SEARCHFILE" ] && exit
 
