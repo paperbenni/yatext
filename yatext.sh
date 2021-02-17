@@ -128,7 +128,8 @@ fi
 [ -e "$TASKLOCATION/yatext" ] || mkdir "$TASKLOCATION"/yatext
 
 if ! [ -e "$TASKLOCATION/yatext/$TUUID.md" ]; then
-    TTITLE="$(task rc.report.next.columns:'description' rc.report.next.labels:'description' rc.verbose=nothing rc.defaultwidth=0 next "$TUUID")"
+    TTITLE="$(task rc.report.next.columns:'description' rc.report.next.labels:'EXCLUDE' rc.verbose=nothing rc.defaultwidth=0 next "$TUUID" |
+        grep -v EXCLUDE | grep -v '\----' | grep -v '^  ' | grep '..' | head -1)"
     echo "TITLE $TTITLE"
     echo "# $TTITLE" >"$TASKLOCATION/yatext/$TUUID.md"
     echo "created new task"
