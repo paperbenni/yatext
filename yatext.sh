@@ -27,17 +27,34 @@ if [ -n "$1" ]; then
         else
             GREPTEXT="$2"
         fi
-        SEARCHLIST="$(rg --vimgrep "$GREPTEXT" . | sed 's/\([^:]*\):[0-9]*:[0-9]*:\(.*\)/\1;:; \2/g')"
+        SEARCHLIST="$(rg --vimgrep "$GREPTEXT" . | grep -o '^[^:]*')"
+
         if [ -z "$SEARCHLIST" ]; then
             echo "no matches"
             exit
         fi
+
         if [ "$(wc -l <<<"$SEARCHLIST")" -gt 1 ]; then
-            SEARCHFILE="$(fzf <<<"$SEARCHLIST")"
+            SEARCHMENU=""
+            while read -r FILEITEM; do
+                SEARCHMENU="$SEARCHMENU
+            $(
+                    {
+                        head -1 "$FILEITEM"
+                        echo "$FILEITEM"
+                    } | tr '\n' ';:;'
+                )"
+            done <<<"$SEARCHLIST"
+            SEARCHMENU="$(sort -u <<<"$SEARCHMENU" | grep '..' | sed 's/;$//g' | sed 's/^[ ]*//g')"
+            if [ "$(wc -l <<<"$SEARCHMENU")" -gt 1 ]; then
+                SEARCHFILE="$(fzf <<<"$SEARCHMENU" | grep -o '[^;]*$')"
+            else
+                SEARCHFILE="$(grep -o '[^;]*$' <<<"$SEARCHMENU")"
+                echo "SEARCHFILE $SEARCHFILE"
+            fi
         else
             SEARCHFILE="$SEARCHLIST"
         fi
-        SEARCHFILE="$(grep -o '^.*;:;' <<<"$SEARCHFILE" | sed 's/;:;//g')"
 
         [ -z "$SEARCHFILE" ] && exit
 
