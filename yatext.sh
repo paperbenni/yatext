@@ -184,7 +184,6 @@ if [ -e "$TASKLOCATION/yatext/$TUUID.md" ]; then
     if ! {
         task "$TUUID" information | grep -q 'yatext'
     } &>/dev/null; then
-        task "$TUUID" annotate yatext note
         task "$TUUID" modify +yatext
         echo "initialized new yatext task"
     fi
