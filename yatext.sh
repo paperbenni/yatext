@@ -14,6 +14,17 @@ if [ -n "$1" ]; then
         echo "usage: yatext taskwarrior-filter-expression"
         exit
         ;;
+    today)
+        echo 'editing todays list'
+        CURDATE="$(date +%Y-%m-%d)"
+        DATEFILE="$TASKLOCATION/yatext/$CURDATE.md"
+        if ! [ -e "$DATEFILE" ]; then
+            [ -d "$TASKLOCATION/yatext" ] || mkdir -p "$TASKLOCATION/yatext"
+            echo "# tdy todo list $CURDATE" >>"$DATEFILE"
+        fi
+        $EDITOR "$DATEFILE"
+        exit
+        ;;
     a)
         YACTION="append"
         shift 1
